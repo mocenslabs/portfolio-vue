@@ -1,188 +1,194 @@
 <template>
-  <div class="responsive-container">
+    <div class="responsive-container">
+        <div class="contact-container">
+            <div class="form-container">
+                <div v-if="message.show" :class="['message', message.type]">
+                    {{ message.text }}
+                </div>
 
-    <div class="contact-container">
-      <div class="form-container">
-        <div
-          v-if="message.show"
-          :class="['message', message.type]"
-        >
-          {{ message.text }}
+                <form @submit.prevent="submitContact">
+                    <label for="full_name">Nombre Completo:</label>
+                    <input
+                        type="text"
+                        id="full_name"
+                        v-model="form.full_name"
+                        required
+                    />
+
+                    <label for="phone">Teléfono:</label>
+                    <input
+                        type="text"
+                        id="phone"
+                        v-model="form.phone"
+                        required
+                    />
+
+                    <label for="email">Email:</label>
+                    <input
+                        type="email"
+                        id="email"
+                        v-model="form.email"
+                        required
+                    />
+
+                    <label for="subject">Asunto:</label>
+                    <input
+                        type="text"
+                        id="subject"
+                        v-model="form.subject"
+                        required
+                    />
+
+                    <label for="message_field">Mensaje:</label>
+                    <textarea
+                        id="message_field"
+                        v-model="form.message"
+                        required
+                    ></textarea>
+
+                    <button type="submit" :disabled="isSubmitting">
+                        {{ isSubmitting ? "Enviando..." : "Enviar" }}
+                    </button>
+                </form>
+            </div>
+
+            <div class="contact-info">
+                <h2>Información de Contacto</h2>
+                <p><strong>Teléfono:</strong> +54 9 3471 630170</p>
+                <p><strong>Email:</strong> mauro.vicens@gmail.com</p>
+                <p><strong>Dirección:</strong> Armstrong, Argentina</p>
+                <p><strong>Horarios:</strong> Lunes - Viernes: 9am - 5pm</p>
+
+                <div class="contact-social">
+                    <a href="https://github.com/mocenslabs" class="social-link">
+                        <i class="bi bi-github"></i>
+                    </a>
+                    <a
+                        href="https://linkedin.com/in/mauro-andres-vicens"
+                        class="social-link"
+                    >
+                        <i class="bi bi-linkedin"></i>
+                    </a>
+                    <a
+                        href="https://instagram.com/mocens.labs"
+                        class="social-link"
+                    >
+                        <i class="bi bi-instagram"></i>
+                    </a>
+                    <a href="https://t.me/mocenslabs" class="social-link">
+                        <i class="bi bi-telegram"></i>
+                    </a>
+                    <a href="https://wa.me/5493471630170" class="social-link">
+                        <i class="bi bi-whatsapp"></i>
+                    </a>
+                </div>
+            </div>
         </div>
 
-        <form @submit.prevent="submitContact">
-          <label for="full_name">Nombre Completo:</label>
-          <input
-            type="text"
-            id="full_name"
-            v-model="form.full_name"
-            required
-          >
-
-          <label for="phone">Teléfono:</label>
-          <input
-            type="text"
-            id="phone"
-            v-model="form.phone"
-            required
-          >
-
-          <label for="email">Email:</label>
-          <input
-            type="email"
-            id="email"
-            v-model="form.email"
-            required
-          >
-
-          <label for="subject">Asunto:</label>
-          <input
-            type="text"
-            id="subject"
-            v-model="form.subject"
-            required
-          >
-
-          <label for="message_field">Mensaje:</label>
-          <textarea
-            id="message_field"
-            v-model="form.message"
-            required
-          ></textarea>
-
-          <button type="submit" :disabled="isSubmitting">
-            {{ isSubmitting ? 'Enviando...' : 'Enviar' }}
-          </button>
-        </form>
-      </div>
-
-      <div class="contact-info">
-        <h2>Información de Contacto</h2>
-        <p><strong>Teléfono:</strong> +54 9 3471 630170</p>
-        <p><strong>Email:</strong> mauro.vicens@gmail.com</p>
-        <p><strong>Dirección:</strong> Armstrong, Argentina</p>
-        <p><strong>Horarios:</strong> Lunes - Viernes: 9am - 5pm</p>
-
-        <div class="contact-social">
-          <a href="https://github.com/blackeagledhs" class="social-link">
-            <i class="bi bi-github"></i>
-          </a>
-          <a href="https://linkedin.com/in/mauro-andres-vicens" class="social-link">
-            <i class="bi bi-linkedin"></i>
-          </a>
-          <a href="https://instagram.com/mauro.vicens" class="social-link">
-            <i class="bi bi-instagram"></i>
-          </a>
-          <a href="https://t.me/Black_Eagle_DHS" class="social-link">
-            <i class="bi bi-telegram"></i>
-          </a>
-          <a href="https://wa.me/5493471630170" class="social-link">
-            <i class="bi bi-whatsapp"></i>
-          </a>
-        </div>
-      </div>
+        <!-- Footer component - asumiendo que ya tienes un componente equivalente -->
+        <!-- <Footer /> -->
     </div>
-
-    <!-- Footer component - asumiendo que ya tienes un componente equivalente -->
-    <!-- <Footer /> -->
-  </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted } from "vue";
 
 // Estado reactivo del formulario
 const form = reactive({
-  full_name: '',
-  phone: '',
-  email: '',
-  subject: '',
-  message: ''
-})
+    full_name: "",
+    phone: "",
+    email: "",
+    subject: "",
+    message: "",
+});
 
 // Estado del mensaje de respuesta
 const message = reactive({
-  show: false,
-  text: '',
-  type: '' // 'success' o 'error'
-})
+    show: false,
+    text: "",
+    type: "", // 'success' o 'error'
+});
 
 // Estado de carga
-const isSubmitting = ref(false)
+const isSubmitting = ref(false);
 
 // Función para enviar el formulario
 const submitContact = async () => {
-  isSubmitting.value = true
-  message.show = false
+    isSubmitting.value = true;
+    message.show = false;
 
-  try {
-    const formData = new FormData()
-    formData.append('full_name', form.full_name)
-    formData.append('phone', form.phone)
-    formData.append('email', form.email)
-    formData.append('subject', form.subject)
-    formData.append('message', form.message)
+    try {
+        const formData = new FormData();
+        formData.append("full_name", form.full_name);
+        formData.append("phone", form.phone);
+        formData.append("email", form.email);
+        formData.append("subject", form.subject);
+        formData.append("message", form.message);
 
-    const response = await fetch('https://portfolio-blackeagle.fly.dev/api/contact/', {
-      method: 'POST',
-      body: formData
-    })
+        const response = await fetch(
+            "https://portfolio-blackeagle.fly.dev/api/contact/",
+            {
+                method: "POST",
+                body: formData,
+            },
+        );
 
-    if (response.status === 201) {
-      // Éxito
-      message.text = 'Mensaje enviado correctamente.'
-      message.type = 'success'
-      message.show = true
+        if (response.status === 201) {
+            // Éxito
+            message.text = "Mensaje enviado correctamente.";
+            message.type = "success";
+            message.show = true;
 
-      // Limpiar formulario
-      resetForm()
-    } else {
-      // Error del servidor
-      message.text = 'Hubo un error al enviar el mensaje.'
-      message.type = 'error'
-      message.show = true
+            // Limpiar formulario
+            resetForm();
+        } else {
+            // Error del servidor
+            message.text = "Hubo un error al enviar el mensaje.";
+            message.type = "error";
+            message.show = true;
+        }
+    } catch (error) {
+        // Error de red
+        message.text = "Error en la solicitud.";
+        message.type = "error";
+        message.show = true;
+        console.error("Error:", error);
+    } finally {
+        isSubmitting.value = false;
     }
-  } catch (error) {
-    // Error de red
-    message.text = 'Error en la solicitud.'
-    message.type = 'error'
-    message.show = true
-    console.error('Error:', error)
-  } finally {
-    isSubmitting.value = false
-  }
-}
+};
 
 // Función para limpiar el formulario
 const resetForm = () => {
-  form.full_name = ''
-  form.phone = ''
-  form.email = ''
-  form.subject = ''
-  form.message = ''
-}
+    form.full_name = "";
+    form.phone = "";
+    form.email = "";
+    form.subject = "";
+    form.message = "";
+};
 
 // Configurar el título de la página al montar el componente
 onMounted(() => {
-  document.title = 'Contacto'
+    document.title = "Contacto";
 
-  // Agregar el favicon si no existe
-  if (!document.querySelector('link[rel="shortcut icon"]')) {
-    const favicon = document.createElement('link')
-    favicon.rel = 'shortcut icon'
-    favicon.href = '/assets/bedhs.ico'
-    favicon.type = 'image/x-icon'
-    document.head.appendChild(favicon)
-  }
+    // Agregar el favicon si no existe
+    if (!document.querySelector('link[rel="shortcut icon"]')) {
+        const favicon = document.createElement("link");
+        favicon.rel = "shortcut icon";
+        favicon.href = "/assets/bedhs.ico";
+        favicon.type = "image/x-icon";
+        document.head.appendChild(favicon);
+    }
 
-  // Agregar Bootstrap Icons si no existe
-  if (!document.querySelector('link[href*="bootstrap-icons"]')) {
-    const bootstrapIcons = document.createElement('link')
-    bootstrapIcons.rel = 'stylesheet'
-    bootstrapIcons.href = 'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css'
-    document.head.appendChild(bootstrapIcons)
-  }
-})
+    // Agregar Bootstrap Icons si no existe
+    if (!document.querySelector('link[href*="bootstrap-icons"]')) {
+        const bootstrapIcons = document.createElement("link");
+        bootstrapIcons.rel = "stylesheet";
+        bootstrapIcons.href =
+            "https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css";
+        document.head.appendChild(bootstrapIcons);
+    }
+});
 </script>
 
 <style scoped>
@@ -213,25 +219,33 @@ onMounted(() => {
 
 /* Efectos decorativos */
 .contact-container::after {
-    content: '';
+    content: "";
     position: absolute;
     top: -50%;
     right: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle, rgba(255, 102, 0, 0.1) 0%, transparent 70%);
+    background: radial-gradient(
+        circle,
+        rgba(255, 102, 0, 0.1) 0%,
+        transparent 70%
+    );
     pointer-events: none;
     animation: rotate 20s linear infinite;
 }
 
 @keyframes rotate {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Línea divisoria moderna */
 .contact-container::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 10%;
     bottom: 10%;
@@ -317,13 +331,18 @@ onMounted(() => {
 }
 
 .form-container button::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.2),
+        transparent
+    );
     transition: left 0.5s;
 }
 
@@ -480,7 +499,8 @@ onMounted(() => {
         display: none;
     }
 
-    .form-container, .contact-info {
+    .form-container,
+    .contact-info {
         width: 100%;
         margin-bottom: 30px;
         padding: 0;
