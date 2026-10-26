@@ -1,231 +1,152 @@
 <template>
-  <div>
+  <div class="page">
+    <div class="container">
+      <header class="section-header">
+        <h1>{{ t(messages.extras, 'title') }}</h1>
+      </header>
 
-    <main class="responsive-container">
-      <section class="extra-section">
-        <div class="extra-card">
-          <div
-            v-for="extra in extras"
-            :key="extra.id || extra.year + extra.activity"
-            class="extra-item"
-          >
-            <span class="year">{{ extra.year }}</span> -
-            <span class="activity">{{ extra.activity }}</span>
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>{{ t(messages.common, 'loading') }}</p>
+      </div>
+
+      <div v-else-if="error" class="error-state">
+        <p>{{ t(messages.common, 'errorLoad') }}</p>
+      </div>
+
+      <template v-else>
+        <!-- Activities -->
+        <section v-if="extras.length" class="block">
+          <h2 class="block-title">{{ t(messages.extras, 'activities') }}</h2>
+          <div class="extras-list">
+            <div v-for="item in extras" :key="item.id" class="card extra-row">
+              <span class="extra-year">{{ item.year }}</span>
+              <span class="extra-text">{{ item.activity }}</span>
+            </div>
           </div>
+        </section>
 
-          <div v-if="extras.length === 0 && !loadingExtras" class="no-data">
-            No hay datos extras disponibles
+        <!-- Other -->
+        <section v-if="others.length" class="block">
+          <h2 class="block-title">{{ t(messages.extras, 'other') }}</h2>
+          <div class="other-grid">
+            <article v-for="item in others" :key="item.id" class="card other-card">
+              <img v-if="item.image" :src="item.image" :alt="item.title" loading="lazy" />
+              <div class="other-body">
+                <span class="extra-year">{{ item.year }}</span>
+                <h3>{{ item.title }}</h3>
+                <p>{{ item.institute }}</p>
+              </div>
+            </article>
           </div>
-
-          <div v-if="loadingExtras" class="loading">
-            Cargando extras...
-          </div>
-        </div>
-      </section>
-
-      <section class="other-section">
-        <div
-          v-for="other in others"
-          :key="other.id || other.title"
-          class="other-card"
-        >
-          <img
-            :src="other.image"
-            :alt="`Imagen de ${other.title}`"
-            @error="handleImageError"
-          >
-          <h2>{{ other.title }}</h2>
-          <p class="institute-year">{{ other.institute }} - {{ other.year }}</p>
-        </div>
-
-        <div v-if="others.length === 0 && !loadingOthers" class="no-data">
-          No hay otros datos disponibles
-        </div>
-
-        <div v-if="loadingOthers" class="loading">
-          Cargando otros datos...
-        </div>
-      </section>
-    </main>
+        </section>
+      </template>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { getExtras, getOther } from '@/api/client'
+import { useLocale, onLangChange } from '@/composables/useLocale'
+import { messages } from '@/i18n/messages'
 
-
+const { lang, t } = useLocale()
 const extras = ref([])
 const others = ref([])
-const loadingExtras = ref(false)
-const loadingOthers = ref(false)
-const error = ref(null)
+const loading = ref(true)
+const error = ref(false)
 
-
-const fetchExtras = async () => {
+async function load() {
+  loading.value = true
+  error.value = false
   try {
-    loadingExtras.value = true
-    const response = await fetch('https://portfolio-blackeagle.fly.dev/api/extra/')
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    extras.value = data
-
-  } catch (err) {
-    console.error('Error fetching extras:', err)
-    extras.value = []
-    error.value = `Error cargando extras: ${err.message}`
+    const [extrasData, otherData] = await Promise.all([
+      getExtras(lang.value),
+      getOther(lang.value),
+    ])
+    extras.value = Array.isArray(extrasData) ? extrasData : []
+    others.value = Array.isArray(otherData) ? otherData : []
+  } catch (e) {
+    console.error(e)
+    error.value = true
   } finally {
-    loadingExtras.value = false
+    loading.value = false
   }
 }
 
-
-const fetchOthers = async () => {
-  try {
-    loadingOthers.value = true
-    const response = await fetch('https://portfolio-blackeagle.fly.dev/api/other/')
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
-    }
-
-    const data = await response.json()
-    others.value = data
-
-  } catch (err) {
-    console.error('Error fetching others:', err)
-    others.value = []
-    error.value = `Error cargando others: ${err.message}`
-  } finally {
-    loadingOthers.value = false
-  }
-}
-
-
-const handleImageError = (event) => {
-  console.error('Error loading image:', event.target.src)
-  // Opcionalmente puedes asignar una imagen por defecto
-  // event.target.src = '/path/to/default-image.jpg'
-}
-
-
-onMounted(async () => {
-  await Promise.all([
-    fetchExtras(),
-    fetchOthers()
-  ])
-})
+onMounted(load)
+onLangChange(load)
 </script>
 
 <style scoped>
-body {
-    font-family: Arial, sans-serif;
+.block {
+  margin-bottom: 3rem;
 }
 
-main {
-    padding: 20px;
+.block-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+  color: var(--text-secondary);
 }
 
-
-.extra-section {
-    max-width: 1024px;
-    display: flex;
-    justify-content: center;
-    margin: 0 auto 40px;
+.extras-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 720px;
 }
 
-.extra-card {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
+.extra-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1.25rem;
+  padding: 1rem 1.25rem;
 }
 
-.extra-item {
-    background-color: #ccc;
-    padding: 10px;
-    border-radius: 8px;
-    display: flex;
-    justify-content: center;
+.extra-year {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--accent);
+  min-width: 48px;
 }
 
-.extra-item .year {
-    font-weight: bold;
+.extra-text {
+  font-size: 0.95rem;
+  color: var(--text-primary);
 }
 
-.extra-item .activity {
-    text-align: left;
-}
-
-
-.other-section {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;
-    max-width: 1024px;
-    margin: 0 auto;
+.other-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
 }
 
 .other-card {
-    background-color: #f0f0f0;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
+  padding: 0;
+  overflow: hidden;
 }
 
 .other-card img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 10px;
+  width: 100%;
+  aspect-ratio: 16/10;
+  object-fit: cover;
 }
 
-.other-card h2 {
-    margin-top: 10px;
-    margin-bottom: 10px;
+.other-body {
+  padding: 1.1rem;
 }
 
-.other-card .institute-year {
-    font-style: italic;
-    margin-top: 5px;
+.other-body h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0.25rem 0;
 }
 
-
-.loading {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-    font-style: italic;
-}
-
-.no-data {
-    text-align: center;
-    padding: 20px;
-    color: #999;
-    font-style: italic;
-}
-
-/* Media query para pantallas pequeñas */
-@media (max-width: 768px) {
-    .extra-section {
-        padding-top: 20px;
-    }
-    .extra-card {
-        flex-direction: column;
-    }
-
-    .other-section {
-        grid-template-columns: 1fr;
-    }
-
-    main {
-        padding: 10px;
-    }
+.other-body p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
 }
 </style>

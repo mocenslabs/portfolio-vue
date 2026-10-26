@@ -1,195 +1,155 @@
 <template>
-  <div>
+  <div class="page">
+    <div class="container">
+      <header class="section-header">
+        <h1>{{ t(messages.experience, 'title') }}</h1>
+        <p>{{ t(messages.experience, 'subtitle') }}</p>
+      </header>
 
-    <main class="responsive-container">
-      <section class="experience-section">
-        <div
-          v-for="experience in experiences"
-          :key="experience.id || experience.position + experience.company"
-          class="experience-card"
+      <div v-if="loading" class="loading-state">
+        <div class="spinner"></div>
+        <p>{{ t(messages.common, 'loading') }}</p>
+      </div>
+
+      <div v-else-if="error" class="error-state">
+        <p>{{ t(messages.common, 'errorLoad') }}</p>
+      </div>
+
+      <div v-else class="timeline">
+        <article
+          v-for="(exp, i) in list"
+          :key="exp.id"
+          class="timeline-item"
         >
-          <div class="experience-header">
-            <h2 class="position">{{ experience.position }}</h2>
-            <h3 class="company">{{ experience.company }}</h3>
+          <div class="timeline-marker">
+            <div class="dot"></div>
+            <div v-if="i < list.length - 1" class="line"></div>
           </div>
-          <div class="experience-date">
-            {{ experience.month_of_income }}/{{ experience.year_of_income }} -
-            {{ experience.month_of_egress }}/{{ experience.year_of_egress }}
+          <div class="card timeline-card">
+            <div class="exp-header">
+              <h3>{{ exp.position }}</h3>
+              <span class="exp-dates">
+                {{ exp.month_of_income }}/{{ exp.year_of_income }}
+                –
+                {{ formatEgress(exp) }}
+              </span>
+            </div>
+            <p class="exp-company">{{ exp.company }}</p>
+            <p class="exp-desc">{{ exp.description }}</p>
           </div>
-          <p class="description">{{ experience.description }}</p>
-        </div>
-      </section>
-    </main>
-
+        </article>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import axios from 'axios'
+import { getExperience } from '@/api/client'
+import { useLocale, onLangChange } from '@/composables/useLocale'
+import { messages } from '@/i18n/messages'
 
-
-const experiences = ref([])
+const { lang, t } = useLocale()
+const list = ref([])
 const loading = ref(true)
-const error = ref(null)
+const error = ref(false)
 
+function formatEgress(exp) {
+  if (!exp.year_of_egress || exp.year_of_egress === 0) {
+    return t(messages.experience, 'present')
+  }
+  return `${exp.month_of_egress}/${exp.year_of_egress}`
+}
 
-const fetchExperiences = async () => {
+async function load() {
+  loading.value = true
+  error.value = false
   try {
-    loading.value = true
-    error.value = null
-
-    const response = await axios.get('https://portfolio-blackeagle.fly.dev/api/experience/')
-    experiences.value = response.data
-  } catch (err) {
-    error.value = err.response?.data?.message || err.message || 'Error al cargar experiencias'
-    console.error('Error fetching experience:', err)
-    experiences.value = []
+    const data = await getExperience(lang.value)
+    list.value = Array.isArray(data) ? data : []
+  } catch (e) {
+    console.error(e)
+    error.value = true
   } finally {
     loading.value = false
   }
 }
 
-
-onMounted(() => {
-  fetchExperiences()
-})
-
-
-const reloadExperiences = () => {
-  fetchExperiences()
-}
-
-
-defineExpose({
-  reloadExperiences
-})
+onMounted(load)
+onLangChange(load)
 </script>
 
 <style scoped>
-
-body {
-    font-family: Arial, sans-serif;
+.timeline {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-.experience-section {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    max-width: 1200px;
-    margin: 0 auto;
-    gap: 16px;
-    padding: 16px;
+.timeline-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  gap: 1.25rem;
 }
 
-
-@media (min-width: 1200px) {
-    .experience-section {
-        grid-template-columns: repeat(3, 1fr);
-    }
+.timeline-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 1.4rem;
 }
 
-.experience-card {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    padding: 0;
-    width: 100%;
-    min-width: 300px;
+.timeline-marker .dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  flex-shrink: 0;
 }
 
-.experience-header {
-    background-color: #666666;
-    color: #ffffff;
-    padding: 16px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    min-height: 80px;
+.timeline-marker .line {
+  width: 2px;
+  flex: 1;
+  background: var(--border);
+  margin-top: 0.5rem;
 }
 
-.experience-header h2,
-.experience-header h3 {
-    margin: 0;
-    line-height: 1.3;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
+.timeline-card {
+  margin-bottom: 1.5rem;
 }
 
-.experience-header h2 {
-    font-size: 1.2em;
-    font-weight: bold;
-    flex: 1;
-    margin-right: 8px;
+.exp-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
 }
 
-.experience-header h3 {
-    font-size: 1em;
-    font-weight: normal;
-    opacity: 0.9;
-    text-align: right;
-    flex-shrink: 0;
-    max-width: 40%;
+.exp-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
 }
 
-.experience-date {
-    font-size: 0.9em;
-    color: #555;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    padding: 0 16px;
+.exp-dates {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 500;
 }
 
-.description {
-    font-size: 1em;
-    color: #333;
-    padding: 0 16px 16px;
+.exp-company {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
 }
 
-/* Estilos responsivos */
-@media (max-width: 768px) {
-    .experience-section {
-        grid-template-columns: 1fr;
-        max-width: 100%;
-        padding-top: 20px;
-    }
-
-    .experience-card {
-        min-width: auto;
-    }
-
-    .experience-header {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .experience-header h2,
-    .experience-header h3 {
-        margin-bottom: 8px;
-    }
-}
-
-@media (min-width: 769px) and (max-width: 1199px) {
-    .experience-section {
-        grid-template-columns: repeat(2, 1fr);
-    }
-}
-
-
-.loading {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-}
-
-.error {
-    text-align: center;
-    padding: 2rem;
-    color: #d32f2f;
-    background-color: #ffebee;
-    border-radius: 4px;
-    margin: 1rem;
+.exp-desc {
+  font-size: 0.925rem;
+  color: var(--text-secondary);
+  line-height: 1.7;
 }
 </style>
