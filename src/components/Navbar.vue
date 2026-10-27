@@ -73,7 +73,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useLocale } from '@/composables/useLocale'
 import { messages } from '@/i18n/messages'
 
@@ -82,7 +82,14 @@ const mobileOpen = ref(false)
 const isScrolled = ref(false)
 
 const baseUrl = import.meta.env.BASE_URL
-const cvUrl = `${baseUrl}cv/CV-Mauro-A-Vicens.pdf`
+
+// CV según idioma del sitio
+const cvUrl = computed(() => {
+  const file = lang.value === 'en'
+    ? 'Mauro_Vicens_FullStack_Python_Django_EN.pdf'
+    : 'Mauro_Vicens_FullStack_Python_Django_ES.pdf'
+  return `${baseUrl}cv/${file}`
+})
 
 const navItems = [
   { path: '/', key: 'home' },
