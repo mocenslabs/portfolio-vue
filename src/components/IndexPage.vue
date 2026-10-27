@@ -204,9 +204,14 @@ onLangChange(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
   gap: 1rem;
+  /* evita que el zoom se corte en los bordes del contenedor */
+  overflow: visible;
+  padding: 0.5rem;
 }
 
 .badge-card {
+  position: relative;
+  z-index: 1;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -215,20 +220,32 @@ onLangChange(() => {
   align-items: center;
   justify-content: center;
   aspect-ratio: 1;
-  transition: all var(--transition);
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background 0.25s ease, z-index 0s;
+  cursor: pointer;
 }
 
 .badge-card:hover {
+  z-index: 20;
   border-color: var(--accent);
   background: var(--bg-card-hover);
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
+  /* amplía el badge para verlo bien sin empujar el layout */
+  transform: scale(1.85);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(249, 115, 22, 0.25);
 }
 
 .badge-card img {
   max-width: 72px;
   max-height: 72px;
   object-fit: contain;
+  transition: transform 0.25s ease;
+  pointer-events: none;
+}
+
+/* en móvil un poco menos de zoom para no tapar todo */
+@media (max-width: 768px) {
+  .badge-card:hover {
+    transform: scale(1.45);
+  }
 }
 
 /* ── Responsive ───────────────────────────────────────── */
